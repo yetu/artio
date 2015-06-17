@@ -1,8 +1,12 @@
 package main
 
-import "fmt"
-import "github.com/gvalkov/golang-evdev"
-import "os"
+import (
+	"fmt"
+	"os"
+	"os/signal"
+
+	"github.com/jteeuwen/evdev"
+)
 
 func reset() {
 	os.Remove("/mnt/stateful_partition/encrypted.block")
@@ -10,20 +14,27 @@ func reset() {
 }
 
 func pollIR() {
-	resetCodes := map[int]bool{
-		evdev.KEY_H: true,
-		evdev.KEY_B: true,
-	}
 	ir, err := evdev.Open("/dev/input/event0")
-	resetEvents := make([]KeyEvent, 3, 3)
+	defer ir.Close()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		return
+	}
+	//resetEvents := make([]int, 3, 3)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, os.Kill)
 	for {
-		event, err := evdev.ReadOne()
-		if event.Type == evdev.ByEventType.Key {
-			// We have a key event.
-			keyEvent = evdev.NewKeyEvent(event)
-			if resetCodes[keyEvent.Keycode] {
-				fmt.Printf("Found reset keycode\n")
-				fmt.Printf(keyEvent.String())
+		select {
+		case <-signals:
+			return
+		case evt := <-ir.Inbox:
+			if evt.Type != evdev.EvKeys {
+				// Not a key event
+				return
+			}
+			switch evt.Code {
+			case evdev.KeyH, evdev.KeyB:
+				fmt.Println("On of the reset keys has been pressed")
 			}
 		}
 	}
