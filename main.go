@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 
 	"github.com/jteeuwen/evdev"
@@ -11,6 +12,8 @@ import (
 func reset() {
 	os.Remove("/mnt/stateful_partition/encrypted.block")
 	os.Remove("/mnt/stateful_partition/encrypted.key")
+	cmd := exec.Command("reboot")
+	cmd.Run()
 }
 
 func pollIR() {
@@ -35,6 +38,7 @@ func pollIR() {
 			switch evt.Code {
 			case evdev.KeyH, evdev.KeyB:
 				fmt.Println("On of the reset keys has been pressed")
+				//reset()
 			}
 		}
 	}
