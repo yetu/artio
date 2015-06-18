@@ -51,6 +51,7 @@ func pollIR() {
 			if evt.Type != evdev.EvKeys {
 				// Not a key event
 				fmt.Println("Received not a key event")
+				fmt.Printf("%+v\n", evt)
 			} else {
 				switch evt.Code {
 				case evdev.KeyH, evdev.KeyM:
