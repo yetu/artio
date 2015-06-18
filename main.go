@@ -31,6 +31,39 @@ func isValidResetSequence(keys []uint16) bool {
 	return false
 }
 
+func eventToString(event evdev.Event) string {
+	var name string
+
+	switch event.Type {
+	case evdev.EvSync:
+		name = "Sync Events"
+	case evdev.EvKeys:
+		name = "Keys or Buttons"
+	case evdev.EvRelative:
+		name = "Relative Axes"
+	case evdev.EvAbsolute:
+		name = "Absolute Axes"
+	case evdev.EvMisc:
+		name = "Miscellaneous"
+	case evdev.EvLed:
+		name = "LEDs"
+	case evdev.EvSound:
+		name = "Sounds"
+	case evdev.EvRepeat:
+		name = "Repeat"
+	case evdev.EvForceFeedback,
+		evdev.EvForceFeedbackStatus:
+		name = "Force Feedback"
+	case evdev.EvPower:
+		name = "Power Management"
+	case evdev.EvSwitch:
+		name = "Binary switches"
+	default:
+		name = fmt.Sprintf("Unknown (0x%02x)", event.Type)
+	}
+	return name
+}
+
 func pollIR() {
 	ir, err := evdev.Open("/dev/input/event0")
 	defer ir.Close()
@@ -50,7 +83,8 @@ func pollIR() {
 		case evt := <-ir.Inbox:
 			if evt.Type != evdev.EvKeys {
 				// Not a key event
-				fmt.Println("Received not a key event")
+				fmt.Print("Received not a key event: ")
+				fmt.Println(eventToString(evt))
 				fmt.Printf("%+v\n", evt)
 			} else {
 				switch evt.Code {
