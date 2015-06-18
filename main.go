@@ -19,11 +19,11 @@ func reset() {
 
 func isValidResetSequence(keys []int32) bool {
 
-	if len(keys) != 3 {
-		fmt.Printf("Did not receive enough keys for a valid reset sequence: %s\n", len(keys))
+	if len(keys) < 3 {
+		fmt.Printf("Did not receive enough keys for a valid reset sequence: %d\n", len(keys))
 		return false
 	}
-	if keys[0] == 5705736 && keys[1] == evdev.KeyM && keys[2] == evdev.KeyM {
+	if keys[len(keys)-3] == 5705736 && keys[len(keys)-2] == evdev.KeyM && keys[len(keys)-1] == evdev.KeyM {
 		fmt.Println("Home, Menu, Menu has been pressed")
 		return true
 	}
@@ -92,9 +92,9 @@ func pollIR() {
 					fmt.Println("Setting start time, so the sequence has to be entered within 3 seconds")
 					startTime = time.Now().Unix()
 				}
-				if int64(startTime+3) > time.Now().Unix() {
+				if startTime != 0 && int64(startTime+3) > time.Now().Unix() {
 					fmt.Println("Resetting starttime and received key slice since the user waited more than 3 seconds")
-					startTime = time.Now().Unix()
+					startTime = 0
 					receivedKeys = nil
 				}
 				fmt.Printf("Starttime: %d\n", startTime)
