@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"time"
 
 	"github.com/jteeuwen/evdev"
 )
@@ -14,6 +15,18 @@ func reset() {
 	os.Remove("/mnt/stateful_partition/encrypted.key")
 	cmd := exec.Command("reboot")
 	cmd.Run()
+}
+
+func isValidResetSequence(keys []uint16) bool {
+
+	if len(keys) != 3 {
+		return false
+	}
+	if keys[0] == evdev.KeyH && keys[1] == evdev.KeyM && keys[2] == evdev.KeyM {
+		return true
+	}
+
+	return false
 }
 
 func pollIR() {
@@ -26,6 +39,8 @@ func pollIR() {
 	//resetEvents := make([]int, 3, 3)
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, os.Kill)
+	var startTime int64 = 0
+	receivedKeys := make([]uint16, 3, 3)
 	for {
 		select {
 		case <-signals:
@@ -36,9 +51,20 @@ func pollIR() {
 				return
 			}
 			switch evt.Code {
-			case evdev.KeyH, evdev.KeyB:
+			case evdev.KeyH, evdev.KeyM:
+				if startTime == 0 {
+					startTime = time.Now().Unix()
+				}
+				if startTime != 0 && int64(startTime+3) > time.Now().Unix() {
+					startTime = 0
+					receivedKeys = nil
+				}
 				fmt.Println("On of the reset keys has been pressed")
-				//reset()
+				receivedKeys = append(receivedKeys, evt.Code)
+				if isValidResetSequence(receivedKeys) {
+					reset()
+					break
+				}
 			}
 		}
 	}
