@@ -27,42 +27,9 @@ func isValidResetSequence(keys []int32) bool {
 		fmt.Println("Home, Menu, Menu has been pressed")
 		return true
 	}
-	fmt.Println("The key sequence is invalid")
-	fmt.Printf("Keys %d, %d, %d", keys[len(keys)-3], keys[len(keys)-2], keys[len(keys)-1])
+	fmt.Print("The key sequence is invalid: ")
+	fmt.Printf("Keys %d, %d, %d \n", keys[len(keys)-3], keys[len(keys)-2], keys[len(keys)-1])
 	return false
-}
-
-func eventToString(event evdev.Event) string {
-	var name string
-
-	switch event.Type {
-	case evdev.EvSync:
-		name = "Sync Events"
-	case evdev.EvKeys:
-		name = "Keys or Buttons"
-	case evdev.EvRelative:
-		name = "Relative Axes"
-	case evdev.EvAbsolute:
-		name = "Absolute Axes"
-	case evdev.EvMisc:
-		name = "Miscellaneous"
-	case evdev.EvLed:
-		name = "LEDs"
-	case evdev.EvSound:
-		name = "Sounds"
-	case evdev.EvRepeat:
-		name = "Repeat"
-	case evdev.EvForceFeedback,
-		evdev.EvForceFeedbackStatus:
-		name = "Force Feedback"
-	case evdev.EvPower:
-		name = "Power Management"
-	case evdev.EvSwitch:
-		name = "Binary switches"
-	default:
-		name = fmt.Sprintf("Unknown (0x%02x)", event.Type)
-	}
-	return name
 }
 
 func pollIR() {
@@ -72,7 +39,6 @@ func pollIR() {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return
 	}
-	//resetEvents := make([]int, 3, 3)
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, os.Kill)
 	var startTime int64 = 0
@@ -84,20 +50,14 @@ func pollIR() {
 		case evt := <-ir.Inbox:
 			if evt.Type != evdev.EvKeys && evt.Type != evdev.EvMisc {
 				// Not a key event
-				fmt.Print("Received not a relevant event: ")
-				fmt.Println(eventToString(evt))
-				fmt.Printf("%+v\n", evt)
 			} else {
 				fmt.Println("----------------------------")
 				if startTime == 0 {
-					fmt.Println("Setting start time, so the sequence has to be entered within 3 seconds")
 					startTime = time.Now().Unix()
 				} else if int64(startTime+3) < time.Now().Unix() {
-					fmt.Println("Resetting starttime and received key slice since the user waited more than 3 seconds")
 					startTime = 0
 					receivedKeys = nil
 				}
-				fmt.Printf("Starttime: %d\n", startTime)
 				var value int32 = 0
 				if evt.Type == evdev.EvKeys {
 					value = int32(evt.Code)
