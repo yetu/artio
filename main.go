@@ -20,7 +20,7 @@ func reset() {
 func isValidResetSequence(keys []int32) bool {
 
 	if len(keys) != 3 {
-		fmt.Println("Did not receive enough keys for a valid reset sequence")
+		fmt.Printf("Did not receive enough keys for a valid reset sequence: %s\n", len(keys))
 		return false
 	}
 	if keys[0] == 5705736 && keys[1] == evdev.KeyM && keys[2] == evdev.KeyM {
@@ -97,6 +97,7 @@ func pollIR() {
 					startTime = time.Now().Unix()
 					receivedKeys = nil
 				}
+				fmt.Printf("Starttime: %d\n", startTime)
 				var value int32 = 0
 				if evt.Type == evdev.EvKeys {
 					value = int32(evt.Code)
