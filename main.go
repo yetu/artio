@@ -28,6 +28,7 @@ func isValidResetSequence(keys []int32) bool {
 		return true
 	}
 	fmt.Println("The key sequence is invalid")
+	fmt.Printf("Keys %d, %d, %d", keys[len(keys)-3], keys[len(keys)-2], keys[len(keys)-1])
 	return false
 }
 
