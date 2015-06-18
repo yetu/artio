@@ -20,12 +20,14 @@ func reset() {
 func isValidResetSequence(keys []uint16) bool {
 
 	if len(keys) != 3 {
+		fmt.Println("Did not receive enough keys for a valid reset sequence")
 		return false
 	}
 	if keys[0] == evdev.KeyH && keys[1] == evdev.KeyM && keys[2] == evdev.KeyM {
+		fmt.Println("Home, Menu, Menu has been pressed")
 		return true
 	}
-
+	fmt.Println("The key sequence is invalid")
 	return false
 }
 
@@ -48,22 +50,28 @@ func pollIR() {
 		case evt := <-ir.Inbox:
 			if evt.Type != evdev.EvKeys {
 				// Not a key event
-				return
-			}
-			switch evt.Code {
-			case evdev.KeyH, evdev.KeyM:
-				if startTime == 0 {
-					startTime = time.Now().Unix()
-				}
-				if startTime != 0 && int64(startTime+3) > time.Now().Unix() {
-					startTime = 0
-					receivedKeys = nil
-				}
-				fmt.Println("On of the reset keys has been pressed")
-				receivedKeys = append(receivedKeys, evt.Code)
-				if isValidResetSequence(receivedKeys) {
-					reset()
-					break
+				fmt.Println("Received not a key event")
+			} else {
+				switch evt.Code {
+				case evdev.KeyH, evdev.KeyM:
+					fmt.Println("On of the reset keys has been pressed")
+					if startTime == 0 {
+						fmt.Println("Setting start time, so the sequence has to be entered within 3 seconds")
+						startTime = time.Now().Unix()
+					}
+					if startTime != 0 && int64(startTime+3) > time.Now().Unix() {
+						fmt.Println("Resetting starttime and received key slice since the user waited more than 3 seconds")
+						startTime = 0
+						receivedKeys = nil
+					} else {
+						fmt.Println("The key event is used and added to the buffer slice")
+						receivedKeys = append(receivedKeys, evt.Code)
+						if isValidResetSequence(receivedKeys) {
+							fmt.Println("The received key sequence is valid, initiating reset")
+							reset()
+							return
+						}
+					}
 				}
 			}
 		}
