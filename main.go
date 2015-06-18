@@ -91,8 +91,7 @@ func pollIR() {
 				if startTime == 0 {
 					fmt.Println("Setting start time, so the sequence has to be entered within 3 seconds")
 					startTime = time.Now().Unix()
-				}
-				if startTime != 0 && int64(startTime+3) > time.Now().Unix() {
+				} else if int64(startTime+3) > time.Now().Unix() {
 					fmt.Println("Resetting starttime and received key slice since the user waited more than 3 seconds")
 					startTime = 0
 					receivedKeys = nil
